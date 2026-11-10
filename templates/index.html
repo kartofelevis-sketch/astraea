@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ city.title_tag }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script>
+</head>
+<body>
+
+{% macro ph(key, label, cls='') -%}
+{%- set u = photo(key) -%}
+<figure class="ph {{ cls }} rv"{% if u %} style="background-image:url('{{ u }}')"{% endif %}>
+  {%- if not u %}<span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg>{{ label }}<small>static/img/{{ key }}.jpg</small></span>{% endif -%}
+</figure>
+{%- endmacro %}
+
+{% macro mo(after) -%}
+{%- if after in moments -%}
+{%- set m = moments[after] -%}{%- set u = photo('moment-' ~ m.n) -%}
+<section class="slide moment" id="moment-{{ m.n }}">
+  <figure class="ph rv"{% if u %} style="background-image:url('{{ u }}')"{% endif %}>
+    {%- if not u %}<span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3.2"/><path d="M8 5l1.5-2h5L16 5"/></svg>Крупный кадр {{ m.n }} из {{ moments|length }}<small>static/img/moment-{{ m.n }}.jpg</small></span>{% endif %}
+    <figcaption><i>{{ m.kicker }}</i><b>{{ m.caption }}</b></figcaption>
+  </figure>
+</section>
+{%- endif -%}
+{%- endmacro %}
+
+<main class="hero" id="hero">
+<div id="word0">{{ city.name|upper }}</div>
+<div id="eyebrow">{{ city.motto }}</div>
+<div id="flare"></div>
+<canvas id="gl"></canvas>
+<canvas id="dust"></canvas>
+<div id="pin"><i></i><span>{{ city.name_ru }}</span></div>
+<div id="word1">{{ city.region_title|upper }}</div>
+<ul id="sites"></ul>
+<div id="card"><a href="#" id="explore">Подробнее</a></div>
+<div id="region">{{ city.region_title|upper }}</div>
+<div id="land"></div>
+<div id="dest"><small>{{ city.name }}</small><b id="destName">{{ districts[0].name }}</b></div>
+<div id="fore"></div>
+<div id="fog"></div>
+<div id="scrim"></div>
+<form id="bar" onsubmit="return false">
+  <div><label for="d1">Город</label><input id="d1" value="{{ city.name }}" readonly></div>
+  <div><label for="d2">Район</label><input id="d2" value="{{ districts[0].name }}" readonly></div>
+  <div><label for="d3">Далее</label><input id="d3" value="Описание района" readonly></div>
+  <button type="button" id="next" aria-label="Листать дальше">→</button>
+</form>
+<div id="more">Листайте вниз — описание районов</div>
+
+{% set ns = namespace(n=1) %}
+<!-- ============ СЛАЙДЫ (после посадки) ============ -->
+<div class="deck" id="deckA" aria-label="Слайды презентации">
+
+  <section class="slide" id="motto">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">{{ s.motto.kicker }}</div>
+    <p class="motto rv">{{ city.motto }}</p>
+    <p class="rv nextline">{{ s.motto.next }} ↓</p>
+  </section>
+
+  <section class="slide" id="team">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">{{ city.name }} · кто мы</div>
+    <h2 class="rv">{{ s.team.title }}</h2>
+    <div class="grid g2">
+      {{ ph('team', s.team.photo_label, 'tall') }}
+      <ul class="roles">
+        {% for r, d in s.team.roles %}
+        <li class="rv" style="--d:{{ loop.index0 * 0.08 }}s"><b>{{ r }}</b><span>{{ d }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {{ mo('team') }}
+
+  <section class="slide" id="problems">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Проблема и исследование</div>
+    <h2 class="rv">{{ s.problems.title }}</h2>
+    <div class="grid g3">
+      {% for t, d in s.problems["items"] %}
+      <article class="card rv" style="--d:{{ loop.index0 * 0.1 }}s"><i class="idx">{{ loop.index }}</i><h3>{{ t }}</h3><p>{{ d }}</p></article>
+      {% endfor %}
+    </div>
+    <div class="wide rv"><h3>{{ s.problems.research_title }}</h3><p>{{ s.problems.research }}</p></div>
+  </section>
+
+  <section class="slide" id="idea">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Идея и оригинальность</div>
+    <h2 class="rv">{{ s.idea.title }}</h2>
+    <p class="statement rv">{{ s.idea.statement }}</p>
+    <div class="grid g3">
+      {% for t, d in s.idea["items"] %}
+      <article class="card rv" style="--d:{{ loop.index0 * 0.1 }}s"><i class="idx">{{ loop.index }}</i><h3>{{ t }}</h3><p>{{ d }}</p></article>
+      {% endfor %}
+    </div>
+  </section>
+  {{ mo('idea') }}
+
+  <section class="slide" id="map">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Функциональность и целостность города</div>
+    <h2 class="rv">{{ s.map.title }}</h2>
+    <div class="grid g2">
+      {{ ph('city-map', s.map.photo_label, 'wide') }}
+      <div>
+        <h3 class="sub rv">{{ s.map.intro }}</h3>
+        <ol class="dlist">
+          {% for d in districts %}
+          <li class="rv" style="--d:{{ loop.index0 * 0.05 }}s"><i class="idx">{{ loop.index }}</i><div><b>{{ d.name }}</b><span>{{ d.short }}</span></div></li>
+          {% endfor %}
+        </ol>
+        <div class="wide rv"><h3>{{ s.map.links_title }}</h3><div class="chips">{% for l in s.map.links %}<span>{{ l }}</span>{% endfor %}</div></div>
+      </div>
+    </div>
+  </section>
+
+  {% for d in districts %}
+  <section class="slide district" id="district-{{ loop.index }}">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Район {{ loop.index }} из {{ districts|length }}</div>
+    <h2 class="rv">{{ d.name }}</h2>
+    <div class="grid g2">
+      {{ ph('district-' ~ loop.index, s.district.photo_label, 'wide') }}
+      <div class="stack">
+        <article class="card rv"><h3>{{ s.district.purpose_title }}</h3><p>{{ d.purpose }}</p></article>
+        <article class="card rv" style="--d:0.1s"><h3>{{ s.district.objects_title }}</h3>
+          <ul class="objs">{% for n, t in d.objects %}<li><b>{{ n }}</b> — {{ t }}</li>{% endfor %}</ul></article>
+      </div>
+    </div>
+    <div class="wide rv"><h3>{{ s.district.arch_title }}</h3><p>{{ d.arch }}</p></div>
+  </section>
+  {{ mo('district-' ~ loop.index) }}
+  {% endfor %}
+
+  <section class="slide" id="science">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Наука и технологии</div>
+    <h2 class="rv">{{ s.science.title }}</h2>
+    <div class="grid g4">
+      {% for t, d, tag in s.science["items"] %}
+      <article class="card rv" style="--d:{{ loop.index0 * 0.08 }}s"><i class="idx">{{ loop.index }}</i><h3>{{ t }}</h3><p>{{ d }}</p><span class="tag">{{ tag }}</span></article>
+      {% endfor %}
+    </div>
+  </section>
+  {{ mo('science') }}
+
+  <section class="slide" id="people">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Социальная значимость</div>
+    <h2 class="rv">{{ s.people.title }}</h2>
+    <div class="grid g3">
+      {% for t, d in s.people["items"] %}
+      <article class="card rv" style="--d:{{ loop.index0 * 0.1 }}s"><i class="idx">{{ loop.index }}</i><h3>{{ t }}</h3><p>{{ d }}</p></article>
+      {% endfor %}
+    </div>
+    <div class="wide rv"><p>{{ s.people.strip }}</p></div>
+  </section>
+  {{ mo('people') }}
+
+  <section class="slide" id="model">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Качество макета</div>
+    <h2 class="rv">{{ s.model.title }}</h2>
+    <div class="grid model">
+      {{ ph(s.model.photos[0][0], s.model.photos[0][1], 'big') }}
+      {{ ph(s.model.photos[1][0], s.model.photos[1][1], 'sm1') }}
+      {{ ph(s.model.photos[2][0], s.model.photos[2][1], 'sm2') }}
+      <div class="wide rv txt"><h3>{{ s.model.text_title }}</h3><p>{{ s.model.text }}</p></div>
+    </div>
+  </section>
+
+  <section class="slide" id="summary">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <div class="kicker rv">Итоги</div>
+    <h2 class="rv">{{ s.summary.title }}</h2>
+    <div class="grid g4">
+      {% for t, d in s.summary["items"] %}
+      <article class="card rv" style="--d:{{ loop.index0 * 0.08 }}s"><i class="idx">{{ loop.index }}</i><h3>{{ t }}</h3><p>{{ d }}</p></article>
+      {% endfor %}
+    </div>
+    <p class="final rv">{{ s.summary.final }}</p>
+  </section>
+
+  <section class="slide thanks" id="thanks">
+    <div class="num">{% set ns.n = ns.n + 1 %}{{ '%02d'|format(ns.n) }}</div>
+    <h2 class="rv big">{{ s.thanks.title }}</h2>
+    <p class="rv sub2">{{ s.thanks.sub }}</p>
+    <p class="credit rv">{{ city.author }} · tg: <a href="{{ city.tg_url }}" target="_blank" rel="noopener">{{ city.tg }}</a></p>
+  </section>
+</div>
+
+<header{% if city.sponsors_color %} class="color"{% endif %}>
+  <a class="brand" href="#" id="home">{{ city.name_ru }}</a>
+  <span class="sp-label">Спонсоры</span>
+  {% for u in sponsors %}<span class="sp"><img src="{{ u }}" alt="Логотип спонсора"></span>
+  {% else %}{% for i in range(5) %}<span class="sp ph0">Логотип</span>{% endfor %}{% endfor %}
+</header>
+<div id="rail"><button aria-label="Обложка"></button><button aria-label="Районы"></button><button aria-label="Район"></button><button aria-label="Слайды"></button></div>
+</main>
+
+<script id="data" type="application/json">{{ data|tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
